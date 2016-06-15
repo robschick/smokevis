@@ -1,0 +1,15 @@
+Package: smokevis
+Type: Package
+Title: Makes Simulated Smoking Data for Analysis and Visualisation
+Version: 0.1
+Date: 2016-06-15
+Author: Rob Schick, PhD
+Maintainer: Rob Schick <robschick@gmail.com>
+Description: The goal of this package is to build simulated smoking data using
+    a few different simulation engines. One of these will be simple based on
+    geocoded address locations representing work, home, etc. One will be the
+    HSMM data based on the caterpillar model from Zucchini et al. (2008)
+    Biometrics 64(3):807-815. Using these the package will allow for a few
+    different visuals: shiny, and static print to start.
+License: MIT
+LazyData: TRUE
