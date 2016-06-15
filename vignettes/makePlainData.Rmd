@@ -31,9 +31,9 @@ m %>% addTiles() %>% addMarkers(lng = locs1$lng, lat = locs1$lat, popup = locs1$
 Next we might imagine that we want to separate out craving events with smoking events. That might look like this:
 
 ```{r, fig.width=8, fig.height=8}
-pal <- colorFactor(c("navy", "red"), domain = c("smoke", "crave"))
+pal <- colorFactor(c("navy", "red"), domain = c("crave", "smoke"))
 locs1$type <- factor(
-    ifelse(runif(nrow(locs1)) > 0.75, "smoke", "crave"),
+    ifelse(runif(nrow(locs1)) > 0.75, "crave", "smoke"),
     c("smoke", "crave"))
 m %>% 
   addTiles() %>%
