@@ -20,3 +20,12 @@ library(smokevis)
 locs1
 ```
 
+Those are the raw data, and we can visualise them as follows
+
+```{r, fig.width=8, fig.height=8}
+library(leaflet)
+m <- leaflet() %>% setView(lng = -2.9, lat = 56.403, zoom = 11)
+m %>% addTiles() %>% addMarkers(lng = locs1$lng, lat = locs1$lat, popup = locs1$location)
+```
+
+
