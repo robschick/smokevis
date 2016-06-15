@@ -32,16 +32,46 @@ Next we might imagine that we want to separate out craving events with smoking e
 
 ```{r, fig.width=8, fig.height=8}
 pal <- colorFactor(c("navy", "red"), domain = c("crave", "smoke"))
+
 locs1$type <- factor(
     ifelse(runif(nrow(locs1)) > 0.75, "crave", "smoke"),
     c("smoke", "crave"))
+
 m %>% 
   addTiles() %>%
   addCircleMarkers(
-  lng = locs1$lng, lat = locs1$lat, popup = locs1$location,
+  lng = ~lng, lat = ~lat, popup = ~location,
     radius = ~ifelse(locs1$type == "smoke", 6, 10),
     color = ~pal(locs1$type),
     stroke = FALSE, fillOpacity = 0.5
+  )
+```
+
+Now just experimenting with some different functionality to toggle smoking events on and off:
+
+```{r, fig.width=8, fig.height=8}
+m %>% 
+  addTiles() %>%
+  addCircleMarkers(
+    data = subset(locs1, type == 'smoke'),
+  lng = ~lng, lat = ~lat, popup = ~location,
+    radius = 10,
+    color = 'red',
+    stroke = FALSE, fillOpacity = 0.5,
+  group = 'Smoking'
+  ) %>%
+  addCircleMarkers(
+    data = subset(locs1, type != 'smoke'),
+  lng = ~lng, lat = ~lat, popup = ~location,
+    radius = 6,
+    color = 'blue',
+    stroke = FALSE, fillOpacity = 0.5,
+  group = 'Craving'
+  ) %>%
+  # Layers control
+  addLayersControl(
+    overlayGroups = c("Smoking", "Craving"),
+    options = layersControlOptions(collapsed = FALSE)
   )
 ```
 
