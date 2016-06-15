@@ -5,4 +5,4 @@
 #' baseline for simulating a realistic smoking profile of
 #' a candidate smoker. I should be able to add a few more
 #' but this works for now.
-'locations'
+'locs1'

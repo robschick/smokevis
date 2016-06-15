@@ -9,6 +9,10 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.height = 7, fig.width = 7)
+```
+
 Goal of this is to simply explore making some simulated data that we can visualise with a flexidashboard.
 
 ## Data Info
@@ -22,7 +26,7 @@ locs1
 
 Those are the raw data, and we can visualise them as follows
 
-```{r, fig.width=8, fig.height=8}
+```{r}
 library(leaflet)
 m <- leaflet(data = locs1) %>% setView(lng = -2.9, lat = 56.403, zoom = 11)
 m %>% addTiles() %>% addMarkers(lng = locs1$lng, lat = locs1$lat, popup = locs1$location)
@@ -30,7 +34,7 @@ m %>% addTiles() %>% addMarkers(lng = locs1$lng, lat = locs1$lat, popup = locs1$
 
 Next we might imagine that we want to separate out craving events with smoking events. That might look like this:
 
-```{r, fig.width=8, fig.height=8}
+```{r}
 pal <- colorFactor(c("navy", "red"), domain = c("crave", "smoke"))
 
 locs1$type <- factor(
@@ -49,7 +53,7 @@ m %>%
 
 Now just experimenting with some different functionality to toggle smoking events on and off:
 
-```{r, fig.width=8, fig.height=8}
+```{r}
 m %>% 
   addTiles() %>%
   addCircleMarkers(
@@ -73,5 +77,20 @@ m %>%
     overlayGroups = c("Smoking", "Craving"),
     options = layersControlOptions(collapsed = FALSE)
   )
+```
+
+## Mulitple Smoking Events
+Ok, let's start building up a data frame of smoking events. I'm going to say this person is an average smoker smoking ~14 cigarettes per day (from this [2014 Scottish Health Survey](http://www.gov.scot/Publications/2015/09/6648/318764)). I'll simulate a standard week, comprised of 5 workdays, and 2 weekend days. 
+
+Here are some simulated data:
+
+```{r, simDat}
+nweeks <- 1
+nweekday <- nweeks * 5
+nwkndday <- nweeks * 2
+
+cigsweek    <- floor(rnorm(nweekday, 15, 3))
+cigsweekend <- floor(rnorm(nwkndday, 13, 5))
+df <- 
 ```
 
