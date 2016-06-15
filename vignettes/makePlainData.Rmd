@@ -85,12 +85,50 @@ Ok, let's start building up a data frame of smoking events. I'm going to say thi
 Here are some simulated data:
 
 ```{r, simDat}
+library(lubridate)
 nweeks <- 1
 nweekday <- nweeks * 5
 nwkndday <- nweeks * 2
 
-cigsweek    <- floor(rnorm(nweekday, 15, 3))
-cigsweekend <- floor(rnorm(nwkndday, 13, 5))
-df <- 
+cigsweek    <- floor(rnorm(nweekday, 16, 3))
+cigsweekend <- floor(rnorm(nwkndday, 12, 5))
+dfNum <- data.frame(ncigs = c(cigsweekend[1], cigsweek, cigsweekend[2]),
+                 dayofweek = wday(1:7, label = TRUE),
+                 dayInt = wday(1:7),
+                 date = seq.Date(as.Date('2016-06-19'), as.Date('2016-06-25'), by = 'day'))
+
+smokeDat <- vector(mode = 'list', (nrow(dfNum)))
+
+for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
+  
+  ncigs <- dfNum$ncigs[i]
+  dayVal <- dfNum$dayInt[i]
+  dayLab <- dfNum$dayofweek[i]
+  dayDate <- dfNum$date[i]
+  idx <- sample(nrow(locs1), ncigs, replace = TRUE)
+  
+  dfDay <- data.frame(
+    eventID = 1:ncigs,
+    craving = tnorm(ncigs, lo = 0, hi = 10, mu = 7, sig = 3),
+    satisfaction = tnorm(ncigs, lo = 0, hi = 10, mu = 6, sig = 3),
+    taste = tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 3),
+    reduction = tnorm(ncigs, lo = 0, hi = 10, mu = 3, sig = 1),
+    stress = ifelse(dayVal == 1 | dayVal == 7, 
+                tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2), 
+                tnorm(ncigs, lo = 0, hi = 10, mu = 7.5, sig = 3)),
+    time = randTimes(ncigs, 
+                     st = paste(dayDate, ' 06:30:00', sep = ''), 
+                     et = paste(dayDate, ' 22:30:00', sep = '')),
+    dayofweek = dayLab,
+    lat = locs1$lat[idx],
+    lng = locs1$lng[idx],
+    qualLoc = locs1$location[idx],
+    smoked = TRUE
+  )  
+  smokeDat[[i]] <- dfDay
+}
+
+
+
 ```
 
