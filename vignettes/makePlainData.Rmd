@@ -14,3 +14,9 @@ Goal of this is to simply explore making some simulated data that we can visuali
 ## Data Info
 
 The idea is to take some various geocoded locations, and add them in to a data frame. These will be master ones to be recycled. These will contain a few candidate locations like: `home`, `work`, `grocery`, `pub1`, `pub2`, etc. This will just be a starting point.
+
+```{r}
+library(smokevis)
+locs1
+```
+
