@@ -13,3 +13,6 @@ Description: The goal of this package is to build simulated smoking data using
     different visuals: shiny, and static print to start.
 License: MIT
 LazyData: TRUE
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

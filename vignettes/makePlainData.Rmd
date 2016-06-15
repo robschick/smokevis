@@ -1,0 +1,16 @@
+---
+title: "Make Plain Simulated Data for Smoking Visualisation"
+author: "Rob Schick, PhD"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Make Plain Simulated Data for Smoking Visualisation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Goal of this is to simply explore making some simulated data that we can visualise with a flexidashboard.
+
+## Data Info
+
+The idea is to take some various geocoded locations, and add them in to a data frame. These will be master ones to be recycled.
