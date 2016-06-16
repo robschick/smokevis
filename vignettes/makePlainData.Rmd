@@ -261,12 +261,18 @@ ggplot(data = sdf, aes(time, craving, group = dayofweek))+
   theme_bw()
 ```
 
-And of stress, with points indicating smoking events (symbol-coded by craving - bigger point = more craving):
+And of stress, with points indicating smoking events (symbol-coded by craving - bigger point = more craving), and highlighting the critical cigarette, which here I've defined as the one with the biggest reduction in craving.:
 
 ```{r, fig.height = 4}
+library(dplyr)
+keyCigs <- sdf %>% 
+  group_by(dayofweek) %>% 
+  top_n(n = 1, wt = reduction)
+
 ggplot(data = sdf, aes(time, stress, group = dayofweek))+
   geom_line(aes(group = dayofweek))+
   geom_point(aes(y = 10, size = craving), alpha = 1 / 5)+
+  geom_point(data = keyCigs, aes(y = 10, size = reduction), alpha = 0.9, colour = mypal[2])+
   scale_size(range = c(1, 5))+
   annotate('rect', xmin = xrect$xmin, xmax = xrect$xmax, ymin = 0, ymax = Inf, fill = grey(.75), alpha = 0.2)+
   scale_x_datetime(minor_breaks = date_breaks('2 hour'), 
