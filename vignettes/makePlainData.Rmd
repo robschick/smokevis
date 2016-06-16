@@ -11,6 +11,7 @@ vignette: >
 
 ```{r global_options, echo=FALSE}
 knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.height = 7, fig.width = 7)
+library(magrittr)
 ```
 
 Goal of this is to simply explore making some simulated data that we can visualise with a flexidashboard.
@@ -58,19 +59,19 @@ m %>%
   addTiles() %>%
   addCircleMarkers(
     data = subset(locs1, type == 'smoke'),
-  lng = ~lng, lat = ~lat, popup = ~location,
+    lng = ~lng, lat = ~lat, popup = ~location,
     radius = 10,
     color = 'red',
     stroke = FALSE, fillOpacity = 0.5,
-  group = 'Smoking'
+    group = 'Smoking'
   ) %>%
   addCircleMarkers(
     data = subset(locs1, type != 'smoke'),
-  lng = ~lng, lat = ~lat, popup = ~location,
+    lng = ~lng, lat = ~lat, popup = ~location,
     radius = 6,
     color = 'blue',
     stroke = FALSE, fillOpacity = 0.5,
-  group = 'Craving'
+    group = 'Craving'
   ) %>%
   # Layers control
   addLayersControl(
@@ -82,9 +83,9 @@ m %>%
 ## Mulitple Smoking Events
 Ok, let's start building up a data frame of smoking events. I'm going to say this person is an average smoker smoking ~14 cigarettes per day (from this [2014 Scottish Health Survey](http://www.gov.scot/Publications/2015/09/6648/318764)). I'll simulate a standard week, comprised of 5 workdays, and 2 weekend days. 
 
-Here are some simulated data:
+Here are some simulated data for smoking events:
 
-```{r, simDat}
+```{r, simDatSmoke}
 library(lubridate)
 nweeks <- 1
 nweekday <- nweeks * 5
@@ -105,7 +106,15 @@ for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
   dayVal <- dfNum$dayInt[i]
   dayLab <- dfNum$dayofweek[i]
   dayDate <- dfNum$date[i]
-  idx <- sample(nrow(locs1), ncigs, replace = TRUE)
+  
+  # On weekend days subject has lower stress, can't smoke at work
+  if (dayVal == 1 | dayVal == 7) { 
+      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2)  
+      idx <- sample((1:nrow(locs1))[locs1$location != 'work'], ncigs, replace = TRUE) 
+    } else {
+      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3)
+      idx <- sample(nrow(locs1), ncigs, replace = TRUE)
+    }
   
   dfDay <- data.frame(
     eventID = 1:ncigs,
@@ -113,22 +122,155 @@ for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
     satisfaction = tnorm(ncigs, lo = 0, hi = 10, mu = 6, sig = 3),
     taste = tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 3),
     reduction = tnorm(ncigs, lo = 0, hi = 10, mu = 3, sig = 1),
-    stress = ifelse(dayVal == 1 | dayVal == 7, 
-                tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2), 
-                tnorm(ncigs, lo = 0, hi = 10, mu = 7.5, sig = 3)),
+    stress = stress,
     time = randTimes(ncigs, 
                      st = paste(dayDate, ' 06:30:00', sep = ''), 
                      et = paste(dayDate, ' 22:30:00', sep = '')),
     dayofweek = dayLab,
-    lat = locs1$lat[idx],
-    lng = locs1$lng[idx],
+    lat = jitter(locs1$lat[idx]),
+    lng = jitter(locs1$lng[idx]),
     qualLoc = locs1$location[idx],
     smoked = TRUE
   )  
   smokeDat[[i]] <- dfDay
 }
-
-
-
+sdf <- as.data.frame(data.table::rbindlist(smokeDat))
 ```
 
+Let's look at those, because we want to be able to try clustering by location.
+
+```{r}
+m %>% 
+  addTiles() %>%
+  addCircleMarkers(
+    data = sdf,
+    lng = ~lng, lat = ~lat, popup = ~qualLoc,
+    radius = ~craving,
+    color = 'red',
+    stroke = TRUE, fillOpacity = 0.5,
+    group = 'Smoking',
+    clusterOptions = markerClusterOptions()
+  ) %>%
+  addCircleMarkers(
+    data = subset(locs1, type != 'smoke'),
+    lng = ~lng, lat = ~lat, popup = ~location,
+    radius = 6,
+    color = 'blue',
+    stroke = FALSE, fillOpacity = 0.5,
+    group = 'Craving',
+    clusterOptions = markerClusterOptions()
+  ) %>%
+  # Layers control
+  addLayersControl(
+    overlayGroups = c("Smoking", "Craving"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) 
+```
+
+Now let's make some craving data, so we can plot the symbols according to amount of craving.
+
+```{r}
+craveDat <- vector(mode = 'list', (nrow(dfNum)))
+
+for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
+  
+  ncigs <- floor(dfNum$ncigs[i] * 0.75)
+  dayVal <- dfNum$dayInt[i]
+  dayLab <- dfNum$dayofweek[i]
+  dayDate <- dfNum$date[i]
+  
+  # On weekend days subject has lower stress, can't smoke at work
+  if (dayVal == 1 | dayVal == 7) { 
+      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2)  
+      idx <- sample((1:nrow(locs1))[locs1$location != 'work'], ncigs, replace = TRUE) 
+    } else {
+      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3)
+      idx <- sample(nrow(locs1), ncigs, replace = TRUE)
+    }
+  
+  dfDay <- data.frame(
+    eventID = 1:ncigs,
+    craving = tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3),
+    stress = stress,
+    time = randTimes(ncigs, 
+                     st = paste(dayDate, ' 06:30:00', sep = ''), 
+                     et = paste(dayDate, ' 22:30:00', sep = '')),
+    dayofweek = dayLab,
+    lat = jitter(locs1$lat[idx]),
+    lng = jitter(locs1$lng[idx]),
+    qualLoc = locs1$location[idx],
+    smoked = FALSE
+  )  
+  craveDat[[i]] <- dfDay
+}
+cdf <- as.data.frame(data.table::rbindlist(craveDat))
+```
+
+```{r}
+mypal <- RColorBrewer::brewer.pal(2, 'Dark2')
+m %>% 
+  addTiles() %>%
+  addCircleMarkers(
+    data = sdf,
+    lng = ~lng, lat = ~lat, popup = paste('Location: ', sdf$qualLoc, '<br>',
+                                          'Satisfaction: ', round(sdf$satisfaction, 2)),
+    radius = ~satisfaction,
+    color = mypal[1],
+    stroke = TRUE, fillOpacity = 0.5,
+    group = 'Smoking'#, clusterOptions = markerClusterOptions()
+  ) %>%
+  addCircleMarkers(
+    data = cdf,
+    lng = ~lng, lat = ~lat, popup = paste('Location: ', cdf$qualLoc, '<br>',
+                                          'Craving: ', round(cdf$craving, 2)),
+    radius = ~craving,
+    color = mypal[2],
+    stroke = TRUE, fillOpacity = 0.5,
+    group = 'Craving'#, clusterOptions = markerClusterOptions()
+  ) %>%
+  # Layers control
+  addLayersControl(
+    overlayGroups = c("Smoking", "Craving"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) 
+```
+## Time Series of Craving
+Now I want to add in the day/night time. I need `maptools` to do this. This will show a static time series. (Eventually I'll get to a zoomeable one.)
+
+```{r, makeNights}
+library(sp)
+library(maptools)
+home <- matrix(c(locs1$lng[1], locs1$lat[1]), nrow = 1)
+Home <- SpatialPoints(home, proj4string=CRS("+proj=longlat +datum=WGS84"))
+tseq <- seq(from = as.POSIXct(dfNum$date[1], tz = 'BST'), 
+            to = as.POSIXct(dfNum$date[length(dfNum$date)], tz = 'BST'), by = 'days')
+sunup <- sunriset(Home, tseq, direction = 'sunrise', POSIXct.out=TRUE)
+sundn <- sunriset(Home, tseq, direction = 'sunset', POSIXct.out=TRUE)
+xrect <- data.frame(xmin = sundn$time[1:(nrow(sundn)-1)], xmax = sunup$time[2:nrow(sunup)], utc.date = 1)
+```
+
+```{r, fig.height = 4}
+library(ggplot2)
+library(scales)
+ggplot(data = sdf, aes(time, craving, group = dayofweek))+
+  geom_line(aes(group = dayofweek))+
+  annotate('rect', xmin = xrect$xmin, xmax = xrect$xmax, ymin = 0, ymax = Inf, fill = grey(.75), alpha = 0.2)+
+  scale_x_datetime(minor_breaks = date_breaks('2 hour'), 
+                   limits = c(as.POSIXct(dfNum$date[1], tz = 'BST'), 
+                              as.POSIXct(dfNum$date[length(dfNum$date)] + 1, tz = 'BST'))) + 
+  theme_bw()
+```
+
+And of stress, with points indicating smoking events (symbol-coded by craving - bigger point = more craving):
+
+```{r, fig.height = 4}
+ggplot(data = sdf, aes(time, stress, group = dayofweek))+
+  geom_line(aes(group = dayofweek))+
+  geom_point(aes(y = 10, size = craving), alpha = 1 / 5)+
+  scale_size(range = c(1, 5))+
+  annotate('rect', xmin = xrect$xmin, xmax = xrect$xmax, ymin = 0, ymax = Inf, fill = grey(.75), alpha = 0.2)+
+  scale_x_datetime(minor_breaks = date_breaks('2 hour'), 
+                   limits = c(as.POSIXct(dfNum$date[1], tz = 'BST'), 
+                              as.POSIXct(dfNum$date[length(dfNum$date)] + 1, tz = 'BST'))) + 
+  theme_bw()
+```
