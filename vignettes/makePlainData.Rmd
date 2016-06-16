@@ -280,3 +280,61 @@ ggplot(data = sdf, aes(time, stress, group = dayofweek))+
                               as.POSIXct(dfNum$date[length(dfNum$date)] + 1, tz = 'BST'))) + 
   theme_bw()
 ```
+
+##  Using dygraphs
+So that was a static time series, let's try to make it a bit interactive.
+
+```{r}
+library(dygraphs)
+# lungDeaths <- cbind(mdeaths, fdeaths)
+# dygraph(lungDeaths)
+
+library(xts)
+# All "negative" values
+stressDat <- as.matrix(sdf[, c(2, 6)])
+stressMat <- xts(stressDat, order.by = sdf$time)
+
+# All three "positive" values
+postDat <- as.matrix(sdf[, c(3, 4, 5)])
+postMat <- xts(postDat, order.by = sdf$time)
+
+# Individual
+craving <- xts(sdf$craving, order.by = sdf$time)
+satisfaction <- xts(sdf$satisfaction, order.by = sdf$time)
+taste <- xts(sdf$taste, order.by = sdf$time)
+reduction <- xts(sdf$reduction, order.by = sdf$time)
+stress <- xts(sdf$stress, order.by = sdf$time)
+
+
+
+dygraph(postMat) %>% 
+  dyRangeSelector() %>% 
+  dyShading(from = xrect$xmin[1], to = xrect$xmax[1]) %>% 
+  dyShading(from = xrect$xmin[2], to = xrect$xmax[2]) %>% 
+  dyShading(from = xrect$xmin[3], to = xrect$xmax[3]) %>% 
+  dyShading(from = xrect$xmin[4], to = xrect$xmax[4]) %>% 
+  dyShading(from = xrect$xmin[5], to = xrect$xmax[5]) %>% 
+  dyShading(from = xrect$xmin[6], to = xrect$xmax[6]) 
+
+dygraph(stressMat) %>%
+  dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
+
+
+dygraph(stressMat) %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE)
+```
+
+Grouped Zoom:
+```{r, fig.height=4, echo=FALSE}
+dygraph(craving, main = "Craving", group = "negative")
+dygraph(stress, main = "Stress", group = "negative")
+```
+
+```{r, fig.height=2, echo=FALSE}
+dygraph(satisfaction, main = "Satisfaction of Cigarette", group = "positive")
+dygraph(reduction, main = "Reduction in Craving", group = "positive")
+dygraph(taste, main = "Taste of Cigarette", group = "positive")
+```
+
