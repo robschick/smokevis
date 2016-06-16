@@ -320,6 +320,7 @@ dygraph(stressMat) %>%
   dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
 
 
+
 dygraph(stressMat) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.2,
@@ -336,5 +337,37 @@ dygraph(stress, main = "Stress", group = "negative")
 dygraph(satisfaction, main = "Satisfaction of Cigarette", group = "positive")
 dygraph(reduction, main = "Reduction in Craving", group = "positive")
 dygraph(taste, main = "Taste of Cigarette", group = "positive")
+```
+
+```{r}
+# Add Annotation
+# presAnnotation <- function(dygraph, x, text) {
+#   dygraph %>%
+#     dyAnnotation(x, text, attachAtBottom = TRUE, width = 60)
+# } 
+# dygraph(stress, main = "Stress", group = "negative") %>% 
+#   presAnnotation(keyCigs$time[1], text = 'Key Cigarette')
+
+
+ttip <- paste('Location: ', keyCigs$qualLoc[1], 
+        '; Satisfaction: ', round(keyCigs$satisfaction[1], 2), 
+        '; Craving: ', round(keyCigs$craving[1], 2), 
+        '; Reduction: ', round(keyCigs$reduction[1], 2), sep = '')
+
+dygraph(stress, main = "Stress", group = "negative") %>% 
+  dyAxis("y", label = "Self-reported Stress Level") %>% 
+  dyAnnotation(keyCigs$time[1], text = keyCigs$eventID[1], tooltip = ttip ) %>% 
+  dyAnnotation(keyCigs$time[2], text = keyCigs$eventID[2], tooltip = paste('Craving: ', round(keyCigs$craving[2], 2))) %>% 
+  dyAnnotation(keyCigs$time[3], text = keyCigs$eventID[3], tooltip = paste('Craving: ', round(keyCigs$craving[3], 2))) %>% 
+  dyAnnotation(keyCigs$time[4], text = keyCigs$eventID[4], tooltip = paste('Craving: ', round(keyCigs$craving[4], 2))) %>% 
+  dyAnnotation(keyCigs$time[5], text = keyCigs$eventID[5], tooltip = paste('Craving: ', round(keyCigs$craving[5], 2))) %>% 
+  dyAnnotation(keyCigs$time[6], text = keyCigs$eventID[6], tooltip = paste('Craving: ', round(keyCigs$craving[6], 2))) %>% 
+  dyAnnotation(keyCigs$time[7], text = keyCigs$eventID[7], tooltip = paste('Craving: ', round(keyCigs$craving[7], 2))) %>% 
+  dyShading(from = xrect$xmin[1], to = xrect$xmax[1]) %>% 
+  dyShading(from = xrect$xmin[2], to = xrect$xmax[2]) %>% 
+  dyShading(from = xrect$xmin[3], to = xrect$xmax[3]) %>% 
+  dyShading(from = xrect$xmin[4], to = xrect$xmax[4]) %>% 
+  dyShading(from = xrect$xmin[5], to = xrect$xmax[5]) %>% 
+  dyShading(from = xrect$xmin[6], to = xrect$xmax[6]) 
 ```
 
