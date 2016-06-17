@@ -321,7 +321,8 @@ keyCigs <- sdf %>%
 ggplot(data = sdf, aes(time, stress, group = dayofweek))+
   geom_line(aes(group = dayofweek))+
   geom_point(aes(y = 10, size = craving), alpha = 1 / 5)+
-  geom_point(data = keyCigs, aes(y = 10, size = reduction), alpha = 0.9, colour = mypal[2])+
+  geom_point(data = keyCigs, aes(x = time, y = 10, size = reduction), 
+             shape = 21, alpha = 0.9, colour = 'black', fill = mypal[2], stroke = 1)+
   scale_size(range = c(1, 5))+
   annotate('rect', xmin = xrect$xmin, xmax = xrect$xmax, ymin = 0, ymax = Inf, fill = grey(.75), alpha = 0.2)+
   scale_x_datetime(minor_breaks = date_breaks('2 hour'), 
