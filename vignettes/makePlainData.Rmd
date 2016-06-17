@@ -160,23 +160,24 @@ Here's what the data look like:
 
 ```{r}
 # head(sdf, 2)
-
-as.htmlwidget(formattable(subset(sdf, select = -c(lat, lng, smoked)), list(
+df <- subset(sdf, select = -c(lat, lng, smoked))
+as.htmlwidget(formattable(df, list(
   eventID = color_tile("#FEE5D9", "#EF3B2C", 0.2),
-  grade = formatter("span",
-                    style = x ~ ifelse(x == "A", style(color = "green", font.weight = "bold"), NA)),
   craving = color_bar("#FCBBA1", 0.2),
   stress = color_bar("#FCBBA1", 0.2),
   satisfaction = color_bar("#A1D99B", 0.2),
-  reduction = formatter("span",
-                          style = x ~ style(color = ifelse(rank(-x) <= 3, "green", "gray")),
-                          x ~ sprintf("%.1f (rank: %02d)", x, rank(-x))),
   taste = color_bar("#A1D99B", 0.2),
+  reduction = formatter("span",
+                          style = x ~ style(color = ifelse(rank(-x) <= 3, "green", "gray"),
+                                            font.weight = ifelse(rank(-x) <= 3, "bold", 'normal')),
+                          x ~ sprintf("%.1f (rank: %02d)", x, rank(-x))),
   dayofweek = formatter("span",
                     style = x ~ ifelse(x != "Sun" & x != "Sat", style(color = "green", font.weight = "bold"), NA)),
   time = formatter("span",
                     style = x ~ ifelse(sdf$dayofweek != "Sun" & sdf$dayofweek != "Sat", style(color = "green", font.weight = "bold"), NA))
-)))
+) ,
+  align = c("r","r","r","l","c","r","r","r", 'r'))
+)
 
 
 ```
