@@ -83,9 +83,9 @@ m %>%
 ## Mulitple Smoking Events
 Ok, let's start building up a data frame of smoking events. I'm going to say this person is an average smoker smoking ~14 cigarettes per day (from this [2014 Scottish Health Survey](http://www.gov.scot/Publications/2015/09/6648/318764)). I'll simulate a standard week, comprised of 5 workdays, and 2 weekend days. 
 
-Here are some simulated data for smoking events:
+Here are some simulated data for smoking events. I'll start with a daily tally:
 
-```{r, simDatSmoke}
+```{r, simDatSmoke1}
 library(lubridate)
 nweeks <- 1
 nweekday <- nweeks * 5
@@ -98,6 +98,25 @@ dfNum <- data.frame(ncigs = c(cigsweekend[1], cigsweek, cigsweekend[2]),
                  dayInt = wday(1:7),
                  date = seq.Date(as.Date('2016-06-19'), as.Date('2016-06-25'), by = 'day'))
 
+
+```
+
+Let's see the raw data then that summarise the smoking events per day of the week:
+
+```{r}
+library(formattable)
+as.htmlwidget(formattable(dfNum, list(
+  # ncigs = color_tile("white", "orange"),
+  ncigs = color_tile("#FEE5D9", "#EF3B2C"),
+  dayofweek = formatter("span",
+                    style = x ~ ifelse(x != "Sun" & x != "Sat", style(color = "green", font.weight = "bold"), NA)),
+  date = formatter("span",
+                    style = x ~ ifelse(dfNum$dayofweek != "Sun" & dfNum$dayofweek != "Sat", style(color = "green", font.weight = "bold"), NA))
+)))
+```
+
+With that made, I can now simulate data at the daily scale. This builds off the number of cigarettes in `dfNum`:
+```{r, simDatSmoke2}
 smokeDat <- vector(mode = 'list', (nrow(dfNum)))
 
 for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
@@ -109,19 +128,19 @@ for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
   
   # On weekend days subject has lower stress, can't smoke at work
   if (dayVal == 1 | dayVal == 7) { 
-      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2)  
+      stress <- round(tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2), 1)  
       idx <- sample((1:nrow(locs1))[locs1$location != 'work'], ncigs, replace = TRUE) 
     } else {
-      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3)
+      stress <- round(tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3), 1)
       idx <- sample(nrow(locs1), ncigs, replace = TRUE)
     }
   
   dfDay <- data.frame(
     eventID = 1:ncigs,
-    craving = tnorm(ncigs, lo = 0, hi = 10, mu = 7, sig = 3),
-    satisfaction = tnorm(ncigs, lo = 0, hi = 10, mu = 6, sig = 3),
-    taste = tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 3),
-    reduction = tnorm(ncigs, lo = 0, hi = 10, mu = 3, sig = 1),
+    craving = round(tnorm(ncigs, lo = 0, hi = 10, mu = 7, sig = 3), 1),
+    satisfaction = round(tnorm(ncigs, lo = 0, hi = 10, mu = 6, sig = 3), 1),
+    taste = round(tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 3), 1),
+    reduction = round(tnorm(ncigs, lo = 0, hi = 10, mu = 3, sig = 1), 1),
     stress = stress,
     time = randTimes(ncigs, 
                      st = paste(dayDate, ' 06:30:00', sep = ''), 
@@ -137,7 +156,32 @@ for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
 sdf <- as.data.frame(data.table::rbindlist(smokeDat))
 ```
 
-Let's look at those, because we want to be able to try clustering by location.
+Here's what the data look like:
+
+```{r}
+# head(sdf, 2)
+
+as.htmlwidget(formattable(subset(sdf, select = -c(lat, lng, smoked)), list(
+  eventID = color_tile("#FEE5D9", "#EF3B2C", 0.2),
+  grade = formatter("span",
+                    style = x ~ ifelse(x == "A", style(color = "green", font.weight = "bold"), NA)),
+  craving = color_bar("#FCBBA1", 0.2),
+  stress = color_bar("#FCBBA1", 0.2),
+  satisfaction = color_bar("#A1D99B", 0.2),
+  reduction = formatter("span",
+                          style = x ~ style(color = ifelse(rank(-x) <= 3, "green", "gray")),
+                          x ~ sprintf("%.1f (rank: %02d)", x, rank(-x))),
+  taste = color_bar("#A1D99B", 0.2),
+  dayofweek = formatter("span",
+                    style = x ~ ifelse(x != "Sun" & x != "Sat", style(color = "green", font.weight = "bold"), NA)),
+  time = formatter("span",
+                    style = x ~ ifelse(sdf$dayofweek != "Sun" & sdf$dayofweek != "Sat", style(color = "green", font.weight = "bold"), NA))
+)))
+
+
+```
+
+Let's look at those mulitple smoking events in the map, because we want to be able to try clustering by location.
 
 ```{r}
 m %>% 
@@ -167,9 +211,10 @@ m %>%
   ) 
 ```
 
-Now let's make some craving data, so we can plot the symbols according to amount of craving.
+## Craving Events
+Now let's make some craving data, so we can plot the symbols according to amount of craving. The simulation is essentially as above, but I only simulate `stress` and `craving` to mimic what the app currently asks
 
-```{r}
+```{r, echo=FALSE}
 craveDat <- vector(mode = 'list', (nrow(dfNum)))
 
 for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
@@ -181,10 +226,10 @@ for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
   
   # On weekend days subject has lower stress, can't smoke at work
   if (dayVal == 1 | dayVal == 7) { 
-      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2)  
+      stress <- round(tnorm(ncigs, lo = 0, hi = 10, mu = 5, sig = 2), 1)
       idx <- sample((1:nrow(locs1))[locs1$location != 'work'], ncigs, replace = TRUE) 
     } else {
-      stress <- tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3)
+      stress <- round(tnorm(ncigs, lo = 0, hi = 10, mu = 8, sig = 3), 1)
       idx <- sample(nrow(locs1), ncigs, replace = TRUE)
     }
   
@@ -204,7 +249,10 @@ for(i in seq_along(lubridate::wday(1:(nweekday + nwkndday)))){
   craveDat[[i]] <- dfDay
 }
 cdf <- as.data.frame(data.table::rbindlist(craveDat))
+head(cdf, 2)
 ```
+
+Now we can see them on the map along with the smoking data. Here the smoking events are symbol-coded by satisfaction of the cigarette and the craving events are symbol-coded by craving. The events also have popups to return a bit more information:
 
 ```{r}
 mypal <- RColorBrewer::brewer.pal(2, 'Dark2')
@@ -234,8 +282,9 @@ m %>%
     options = layersControlOptions(collapsed = FALSE)
   ) 
 ```
+
 ## Time Series of Craving
-Now I want to add in the day/night time. I need `maptools` to do this. This will show a static time series. (Eventually I'll get to a zoomeable one.)
+Now I want to add in the day/night time. I need `maptools` to do this. This will show a static time series of craving.
 
 ```{r, makeNights}
 library(sp)
@@ -261,7 +310,7 @@ ggplot(data = sdf, aes(time, craving, group = dayofweek))+
   theme_bw()
 ```
 
-And of stress, with points indicating smoking events (symbol-coded by craving - bigger point = more craving), and highlighting the critical cigarette, which here I've defined as the one with the biggest reduction in craving.:
+And here's a timeline of stress, with points indicating smoking events (symbol-coded by craving - bigger point = more craving), and highlighting the critical cigarette, which here I've defined as the one with the biggest reduction in craving:
 
 ```{r, fig.height = 4}
 library(dplyr)
@@ -286,26 +335,21 @@ So that was a static time series, let's try to make it a bit interactive.
 
 ```{r}
 library(dygraphs)
-# lungDeaths <- cbind(mdeaths, fdeaths)
-# dygraph(lungDeaths)
-
 library(xts)
-# All "negative" values
+# All "negative" values: craving and stress
 stressDat <- as.matrix(sdf[, c(2, 6)])
 stressMat <- xts(stressDat, order.by = sdf$time)
 
-# All three "positive" values
+# All three "positive" values: satisfcation, taste, reduction
 postDat <- as.matrix(sdf[, c(3, 4, 5)])
 postMat <- xts(postDat, order.by = sdf$time)
 
-# Individual
+# Make individual time series objects
 craving <- xts(sdf$craving, order.by = sdf$time)
 satisfaction <- xts(sdf$satisfaction, order.by = sdf$time)
 taste <- xts(sdf$taste, order.by = sdf$time)
 reduction <- xts(sdf$reduction, order.by = sdf$time)
 stress <- xts(sdf$stress, order.by = sdf$time)
-
-
 
 dygraph(postMat) %>% 
   dyRangeSelector() %>% 
@@ -318,8 +362,6 @@ dygraph(postMat) %>%
 
 dygraph(stressMat) %>%
   dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
-
-
 
 dygraph(stressMat) %>%
   dyHighlight(highlightCircleSize = 5, 
@@ -339,16 +381,8 @@ dygraph(reduction, main = "Reduction in Craving", group = "positive")
 dygraph(taste, main = "Taste of Cigarette", group = "positive")
 ```
 
-```{r}
-# Add Annotation
-# presAnnotation <- function(dygraph, x, text) {
-#   dygraph %>%
-#     dyAnnotation(x, text, attachAtBottom = TRUE, width = 60)
-# } 
-# dygraph(stress, main = "Stress", group = "negative") %>% 
-#   presAnnotation(keyCigs$time[1], text = 'Key Cigarette')
-
-
+We can add a tooltip to return a bit more information behind the 'key' cigarette:
+```{r, echo=FALSE}
 ttip <- paste('Location: ', keyCigs$qualLoc[1], 
         '; Satisfaction: ', round(keyCigs$satisfaction[1], 2), 
         '; Craving: ', round(keyCigs$craving[1], 2), 
@@ -370,4 +404,6 @@ dygraph(stress, main = "Stress", group = "negative") %>%
   dyShading(from = xrect$xmin[5], to = xrect$xmax[5]) %>% 
   dyShading(from = xrect$xmin[6], to = xrect$xmax[6]) 
 ```
+
+
 
