@@ -176,7 +176,7 @@ as.htmlwidget(formattable(df, list(
   time = formatter("span",
                     style = x ~ ifelse(sdf$dayofweek != "Sun" & sdf$dayofweek != "Sat", style(color = "green", font.weight = "bold"), NA))
 ) ,
-  align = c("r","r","r","l","c","r","r","r", 'r'))
+  align = c("r","r","r","l","c","r","r","c", 'c'))
 )
 
 
