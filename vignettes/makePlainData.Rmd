@@ -170,7 +170,7 @@ as.htmlwidget(formattable(df, list(
   reduction = formatter("span",
                           style = x ~ style(color = ifelse(rank(-x) <= 3, "green", "gray"),
                                             font.weight = ifelse(rank(-x) <= 3, "bold", 'normal')),
-                          x ~ sprintf("%.1f (rank: %02d)", x, rank(-x))),
+                          x ~ sprintf("%.1f (rank: %2.0f)", x, rank(-x))),
   dayofweek = formatter("span",
                     style = x ~ ifelse(x != "Sun" & x != "Sat", style(color = "green", font.weight = "bold"), NA)),
   time = formatter("span",
